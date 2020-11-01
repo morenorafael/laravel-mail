@@ -3,27 +3,29 @@
 namespace MorenoRafael\LaravelMail\Transports;
 
 use Illuminate\Mail\Transport\Transport;
-use Illuminate\Support\Facades\Http;
+use SendinBlue\Client\Api\TransactionalEmailsApi;
+use SendinBlue\Client\ApiException;
+use SendinBlue\Client\Model\SendSmtpEmail;
+use SendinBlue\Client\Model\SendSmtpEmailAttachment;
+use SendinBlue\Client\Model\SendSmtpEmailSender;
+use SendinBlue\Client\Model\SendSmtpEmailTo;
 use Swift_Mime_SimpleMessage;
 
 class SendinblueTransport extends Transport
 {
     /**
-     * The SendGrid API key.
-     *
-     * @var string
+     * @var TransactionalEmailsApi
      */
-    protected $key;
-
+    protected $transactionalEmailsApi;
     /**
-     * @var string
+     * @var SendSmtpEmail
      */
-    protected $url;
+    private $sendSmtpEmail;
 
-    public function __construct(string $key, string $url)
+    public function __construct(TransactionalEmailsApi $transactionalEmailsApi, SendSmtpEmail $sendSmtpEmail)
     {
-        $this->key = $key;
-        $this->url = $url;
+        $this->transactionalEmailsApi = $transactionalEmailsApi;
+        $this->sendSmtpEmail = $sendSmtpEmail;
     }
 
     /**
@@ -41,10 +43,13 @@ class SendinblueTransport extends Transport
     public function send(Swift_Mime_SimpleMessage $message, &$failedRecipients = null)
     {
         $to = $this->getTo($message);
+        $this->setPayload($message, $to);
 
-        Http::withHeaders([
-            'api-key' => $this->key
-        ])->post($this->url, $this->payload($message, $to));
+        try {
+            $this->transactionalEmailsApi->sendTransacEmail($this->sendSmtpEmail);
+        } catch (ApiException $e) {
+            dd($e);
+        }
 
         return $this->numberOfRecipients($message);
     }
@@ -56,17 +61,29 @@ class SendinblueTransport extends Transport
      * @param  array $to
      * @return array
      */
-    protected function payload(Swift_Mime_SimpleMessage $message, array $to)
+    protected function setPayload(Swift_Mime_SimpleMessage $message, array $to)
     {
-        return [
-            'sender' => [
-                'name' => config('mail.from.name'),
-                'email' => config('mail.from.address')
-            ],
-            'to' => [$to],
-            'subject' => $message->getSubject(),
-            'htmlContent' => $message->toString(),
-        ];
+        $this->sendSmtpEmail->setSender(new SendSmtpEmailSender([
+            'email' => config('mail.from.address'),
+            'name' => config('mail.from.name')
+        ]))
+            ->setTo([new SendSmtpEmailTo($to)])
+            ->setHtmlContent($message->getBody())
+            ->setSubject($message->getSubject());
+
+        if (count($message->getChildren()) > 0) {
+
+            $file = [];
+
+            foreach ($message->getChildren() as $child) {
+                $file[] = new SendSmtpEmailAttachment([
+                    'content' => base64_encode($child->getBody()),
+                    'name' => $child->getFilename(),
+                ]);
+            }
+
+            $this->sendSmtpEmail->setAttachment($file);
+        }
     }
 
     /**
@@ -80,47 +97,5 @@ class SendinblueTransport extends Transport
         return collect($message->getTo())->map(function ($display, $address) {
             return ['email' => $address, 'name' => $display];
         })->first();
-    }
-
-    /**
-     * Get the API key being used by the transport.
-     *
-     * @return string
-     */
-    public function getKey()
-    {
-        return $this->key;
-    }
-
-    /**
-     * Set the API key being used by the transport.
-     *
-     * @param string $key
-     * @return string
-     */
-    public function setKey(string $key)
-    {
-        return $this->key = $key;
-    }
-
-    /**
-     * Get the domain being used by the transport.
-     *
-     * @return string
-     */
-    public function getUrl()
-    {
-        return $this->url;
-    }
-
-    /**
-     * Set the domain being used by the transport.
-     *
-     * @param string $url
-     * @return string
-     */
-    public function setUrl(string $url)
-    {
-        return $this->url = $url;
     }
 }

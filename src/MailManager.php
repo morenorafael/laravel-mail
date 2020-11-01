@@ -2,11 +2,15 @@
 
 namespace MorenoRafael\LaravelMail;
 
+use GuzzleHttp\Client;
 use Illuminate\Mail\MailManager as BaseMailManager;
 use MorenoRafael\LaravelMail\Transports\SendGridTransport;
 use MorenoRafael\LaravelMail\Transports\SendinblueTransport;
 use SendGrid;
 use SendGrid\Mail\Mail;
+use SendinBlue\Client\Api\TransactionalEmailsApi;
+use SendinBlue\Client\Configuration;
+use SendinBlue\Client\Model\SendSmtpEmail;
 
 class MailManager extends BaseMailManager
 {
@@ -40,6 +44,10 @@ class MailManager extends BaseMailManager
             $config = $this->app['config']->get('services.sendinblue', []);
         }
 
-        return new SendinblueTransport($config['key'], $config['url']);
+        $config = Configuration::getDefaultConfiguration()->setApiKey('api-key', $config['key']);
+        $transactionalEmailsApi = new TransactionalEmailsApi(new Client(), $config);
+        $sendSmtpEmail = new SendSmtpEmail();
+
+        return new SendinblueTransport($transactionalEmailsApi, $sendSmtpEmail);
     }
 }

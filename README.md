@@ -44,10 +44,10 @@ Agregamos al archivo de configuración `config/mail.php`, dentro del array `mail
 
 ### SendPulse
 
-Instalamos el SDK oficial de SendGrid:
+Instalamos el SDK oficial de sendinblue:
 
 ```bash
-composer require sendgrid/sendgrid
+composer require sendinblue/api-v3-sdk
 ```
 
 Agregamos al archivo de configuración `config/services.php` lo siguiente:
@@ -56,7 +56,6 @@ Agregamos al archivo de configuración `config/services.php` lo siguiente:
 ...
 
 'sendinblue' => [
-    'url' => env('SENDINBLUE_URL'),
     'key' => env('SENDINBLUE_KEY'),
 ],
 

@@ -3,21 +3,23 @@
 namespace MorenoRafael\LaravelMail\Transports;
 
 use Illuminate\Mail\Transport\Transport;
+use SendGrid;
+use SendGrid\Mail\Mail;
 use Swift_Mime_SimpleMessage;
 
 class SendGridTransport extends Transport
 {
     /**
-     * @var \SendGrid\Mail\Mail
+     * @var Mail
      */
     protected $mail;
 
     /**
-     * @var \SendGrid
+     * @var SendGrid
      */
     protected $sendgrid;
 
-    public function __construct(\SendGrid\Mail\Mail $mail, \SendGrid $sendgrid)
+    public function __construct(Mail $mail, SendGrid $sendgrid)
     {
         $this->mail = $mail;
         $this->sendgrid = $sendgrid;
@@ -55,7 +57,7 @@ class SendGridTransport extends Transport
         $this->mail->setFrom(config('mail.from.address'), config('mail.from.name'));
         $this->mail->setSubject($message->getSubject());
         $this->mail->addTo($to['email'], $to['name']);
-        $this->mail->addContent("text/html", $message->toString());
+        $this->mail->addContent("text/html", $message->getBody());
 
         if (count($message->getChildren()) > 0) {
             foreach ($message->getChildren() as $file) {
