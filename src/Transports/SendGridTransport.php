@@ -3,27 +3,24 @@
 namespace MorenoRafael\LaravelMail\Transports;
 
 use Illuminate\Mail\Transport\Transport;
-use Illuminate\Support\Facades\Http;
 use Swift_Mime_SimpleMessage;
 
 class SendGridTransport extends Transport
 {
     /**
-     * The SendGrid API key.
-     *
-     * @var string
+     * @var \SendGrid\Mail\Mail
      */
-    protected $key;
+    protected $mail;
 
     /**
-     * @var string
+     * @var \SendGrid
      */
-    protected $url;
+    protected $sendgrid;
 
-    public function __construct(string $key, string $url)
+    public function __construct(\SendGrid\Mail\Mail $mail, \SendGrid $sendgrid)
     {
-        $this->key = $key;
-        $this->url = $url;
+        $this->mail = $mail;
+        $this->sendgrid = $sendgrid;
     }
 
     /**
@@ -41,43 +38,35 @@ class SendGridTransport extends Transport
     public function send(Swift_Mime_SimpleMessage $message, &$failedRecipients = null)
     {
         $to = $this->getTo($message);
+        $this->setPayload($message, $to);
 
-        Http::withToken($this->key)->post($this->url, $this->payload($message, $to));
+        $this->sendgrid->send($this->mail);
 
         return $this->numberOfRecipients($message);
     }
 
     /**
-     * Get the HTTP payload for sending the SendGrid message.
-     *
-     * @param  \Swift_Mime_SimpleMessage $message
-     * @param  array $to
-     * @return array
+     * @param Swift_Mime_SimpleMessage $message
+     * @param array $to
+     * @throws SendGrid\Mail\TypeException
      */
-    protected function payload(Swift_Mime_SimpleMessage $message, array $to)
+    protected function setPayload(Swift_Mime_SimpleMessage $message, array $to)
     {
-        return [
-            'personalizations' => [
-                [
-                    'to' => [$to],
-                    'subject' => $message->getSubject(),
-                ],
-            ],
-            'content' => [
-                [
-                    'type' => 'text/html',
-                    'value' => $message->toString(),
-                ],
-            ],
-            'from' => [
-                'email' => config('mail.from.address'),
-                'name' => config('mail.from.name'),
-            ],
-            'reply_to' => [
-                'email' => config('mail.from.address'),
-                'name' => config('mail.from.name'),
-            ],
-        ];
+        $this->mail->setFrom(config('mail.from.address'), config('mail.from.name'));
+        $this->mail->setSubject($message->getSubject());
+        $this->mail->addTo($to['email'], $to['name']);
+        $this->mail->addContent("text/html", $message->toString());
+
+        if (count($message->getChildren()) > 0) {
+            foreach ($message->getChildren() as $file) {
+                $this->mail->addAttachment(
+                    base64_encode($file->getBody()),
+                    $file->getContentType(),
+                    $file->getFilename(),
+                    $file->getDisposition(),
+                );
+            }
+        }
     }
 
     /**
@@ -91,47 +80,5 @@ class SendGridTransport extends Transport
         return collect($message->getTo())->map(function ($display, $address) {
             return ['email' => $address, 'name' => $display];
         })->first();
-    }
-
-    /**
-     * Get the API key being used by the transport.
-     *
-     * @return string
-     */
-    public function getKey()
-    {
-        return $this->key;
-    }
-
-    /**
-     * Set the API key being used by the transport.
-     *
-     * @param string $key
-     * @return string
-     */
-    public function setKey(string $key)
-    {
-        return $this->key = $key;
-    }
-
-    /**
-     * Get the domain being used by the transport.
-     *
-     * @return string
-     */
-    public function getUrl()
-    {
-        return $this->url;
-    }
-
-    /**
-     * Set the domain being used by the transport.
-     *
-     * @param string $url
-     * @return string
-     */
-    public function setUrl(string $url)
-    {
-        return $this->url = $url;
     }
 }

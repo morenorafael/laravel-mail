@@ -10,19 +10,21 @@ composer require morenorafael/laravel-mail
 
 ## Configuración
 
+### SendGrid
+
+Instalamos el SDK oficial de SendGrid:
+
+```bash
+composer require sendgrid/sendgrid
+```
+
 Agregamos al archivo de configuración `config/services.php` lo siguiente:
 
 ```php
 ...
 
 'sendgrid' => [
-    'url' => env('SENDGRID_URL'),
     'key' => env('SENDGRID_KEY'),
-],
-
-'sendinblue' => [
-    'url' => env('SENDINBLUE_URL'),
-    'key' => env('SENDINBLUE_KEY'),
 ],
 
 ...
@@ -37,10 +39,38 @@ Agregamos al archivo de configuración `config/mail.php`, dentro del array `mail
     'transport' => 'sendgrid',
 ],
 
+...
+```
+
+### SendPulse
+
+Instalamos el SDK oficial de SendGrid:
+
+```bash
+composer require sendgrid/sendgrid
+```
+
+Agregamos al archivo de configuración `config/services.php` lo siguiente:
+
+```php
+...
+
 'sendinblue' => [
-    'transport' => 'sendinblue',
+    'url' => env('SENDINBLUE_URL'),
+    'key' => env('SENDINBLUE_KEY'),
 ],
 
+...
+```
+
+Agregamos al archivo de configuración `config/mail.php`, dentro del array `mailers` lo siguiente:
+
+```php
+...
+
+'sendpulse' => [
+    'transport' => 'sendpulse',
+],
 ...
 ```
 

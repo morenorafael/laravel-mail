@@ -5,6 +5,8 @@ namespace MorenoRafael\LaravelMail;
 use Illuminate\Mail\MailManager as BaseMailManager;
 use MorenoRafael\LaravelMail\Transports\SendGridTransport;
 use MorenoRafael\LaravelMail\Transports\SendinblueTransport;
+use SendGrid;
+use SendGrid\Mail\Mail;
 
 class MailManager extends BaseMailManager
 {
@@ -20,7 +22,10 @@ class MailManager extends BaseMailManager
             $config = $this->app['config']->get('services.sendgrid', []);
         }
 
-        return new SendGridTransport($config['key'], $config['url']);
+        $email = new Mail();
+        $sendgrid = new SendGrid($config['key']);
+
+        return new SendGridTransport($email, $sendgrid);
     }
 
     /**
