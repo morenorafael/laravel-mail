@@ -4,6 +4,7 @@ namespace MorenoRafael\LaravelMail;
 
 use Illuminate\Mail\MailManager as BaseMailManager;
 use MorenoRafael\LaravelMail\Transports\SendGridTransport;
+use MorenoRafael\LaravelMail\Transports\SendinblueTransport;
 
 class MailManager extends BaseMailManager
 {
@@ -20,5 +21,20 @@ class MailManager extends BaseMailManager
         }
 
         return new SendGridTransport($config['key'], $config['url']);
+    }
+
+    /**
+     * Create an instance of the sendinblue Swift Transport driver.
+     *
+     * @param  array  $config
+     * @return SendinblueTransport
+     */
+    protected function createSendinblueTransport(array $config)
+    {
+        if (! isset($config['key'])) {
+            $config = $this->app['config']->get('services.sendinblue', []);
+        }
+
+        return new SendinblueTransport($config['key'], $config['url']);
     }
 }

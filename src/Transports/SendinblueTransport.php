@@ -6,7 +6,7 @@ use Illuminate\Mail\Transport\Transport;
 use Illuminate\Support\Facades\Http;
 use Swift_Mime_SimpleMessage;
 
-class SendGridTransport extends Transport
+class SendinblueTransport extends Transport
 {
     /**
      * The SendGrid API key.
@@ -42,7 +42,9 @@ class SendGridTransport extends Transport
     {
         $to = $this->getTo($message);
 
-        Http::withToken($this->key)->post($this->url, $this->payload($message, $to));
+        Http::withHeaders([
+            'api-key' => $this->key
+        ])->post($this->url, $this->payload($message, $to));
 
         return $this->numberOfRecipients($message);
     }
@@ -57,26 +59,13 @@ class SendGridTransport extends Transport
     protected function payload(Swift_Mime_SimpleMessage $message, array $to)
     {
         return [
-            'personalizations' => [
-                [
-                    'to' => [$to],
-                    'subject' => $message->getSubject(),
-                ],
-            ],
-            'content' => [
-                [
-                    'type' => 'text/html',
-                    'value' => $message->toString(),
-                ],
-            ],
-            'from' => [
-                'email' => config('mail.from.address'),
+            'sender' => [
                 'name' => config('mail.from.name'),
+                'email' => config('mail.from.address')
             ],
-            'reply_to' => [
-                'email' => config('mail.from.address'),
-                'name' => config('mail.from.name'),
-            ],
+            'to' => [$to],
+            'subject' => $message->getSubject(),
+            'htmlContent' => $message->toString(),
         ];
     }
 

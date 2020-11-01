@@ -20,9 +20,13 @@ Agregamos al archivo de configuración `config/services.php` lo siguiente:
     'key' => env('SENDGRID_KEY'),
 ],
 
+'sendinblue' => [
+    'url' => env('SENDINBLUE_URL'),
+    'key' => env('SENDINBLUE_KEY'),
+],
+
 ...
 ```
-
 
 Agregamos al archivo de configuración `config/mail.php`, dentro del array `mailers` lo siguiente:
 
@@ -33,10 +37,17 @@ Agregamos al archivo de configuración `config/mail.php`, dentro del array `mail
     'transport' => 'sendgrid',
 ],
 
+'sendinblue' => [
+    'transport' => 'sendinblue',
+],
+
 ...
 ```
 
 ## Uso
+
+Pueden cosultar la documentacion del servicio Mail de laravel [aquí](https://laravel.com/docs/8.x/mail).
+De igual forma aca les muestro un pequeño ejemplo:
 
 ```php
 $user = new \App\Models\User([
