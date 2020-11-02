@@ -45,11 +45,7 @@ class SendinblueTransport extends Transport
         $to = $this->getTo($message);
         $this->setPayload($message, $to);
 
-        try {
-            $this->transactionalEmailsApi->sendTransacEmail($this->sendSmtpEmail);
-        } catch (ApiException $e) {
-            dd($e);
-        }
+        $this->transactionalEmailsApi->sendTransacEmail($this->sendSmtpEmail);
 
         return $this->numberOfRecipients($message);
     }
