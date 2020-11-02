@@ -19,7 +19,9 @@
             "MorenoRafael\\LaravelMail\\Tests\\": "tests/"
         }
     },
-    "require": {},
+    "require": {
+        "sendpulse/rest-api": "dev-master"
+    },
     "require-dev": {
         "orchestra/testbench": "^7.0"
     },

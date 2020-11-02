@@ -3,26 +3,19 @@
 namespace MorenoRafael\LaravelMail\Transports;
 
 use Illuminate\Mail\Transport\Transport;
-use SendGrid;
-use SendGrid\Mail\Mail;
+use Sendpulse\RestApi\ApiClient;
 use Swift_Mime_SimpleMessage;
 
-class SendGridTransport extends Transport
+class SendPulseTransport extends Transport
 {
     /**
-     * @var Mail
+     * @var ApiClient
      */
-    protected $mail;
+    protected $apiClient;
 
-    /**
-     * @var SendGrid
-     */
-    protected $sendgrid;
-
-    public function __construct(Mail $mail, SendGrid $sendgrid)
+    public function __construct(ApiClient $apiClient)
     {
-        $this->mail = $mail;
-        $this->sendgrid = $sendgrid;
+        $this->apiClient = $apiClient;
     }
 
     /**
@@ -40,35 +33,38 @@ class SendGridTransport extends Transport
     public function send(Swift_Mime_SimpleMessage $message, &$failedRecipients = null)
     {
         $to = $this->getTo($message);
-        $this->setPayload($message, $to);
 
-        $this->sendgrid->send($this->mail);
-
-        return $this->numberOfRecipients($message);
+        $this->apiClient->smtpSendMail($this->setPayload($message, $to));
     }
 
     /**
      * @param Swift_Mime_SimpleMessage $message
      * @param array $to
-     * @throws SendGrid\Mail\TypeException
+     * @return array
      */
     protected function setPayload(Swift_Mime_SimpleMessage $message, array $to)
     {
-        $this->mail->setFrom(config('mail.from.address'), config('mail.from.name'));
-        $this->mail->setSubject($message->getSubject());
-        $this->mail->addTo($to['email'], $to['name']);
-        $this->mail->addContent("text/html", $message->getBody());
+        $email = [
+            'html' => $message->getBody(),
+            'text' => $message->toString(),
+            'subject' => $message->getSubject(),
+            'from' => [
+                'email' => config('mail.from.address'),
+                'name' => config('mail.from.name')
+            ],
+            'to' => [$to],
+        ];
 
         if (count($message->getChildren()) > 0) {
+
+            $email['attachments'] = [];
+
             foreach ($message->getChildren() as $child) {
-                $this->mail->addAttachment(
-                    base64_encode($child->getBody()),
-                    $child->getContentType(),
-                    $child->getFilename(),
-                    $child->getDisposition(),
-                );
+                $email['attachments'] = [$child->getFilename() => $child->getBody()];
             }
         }
+
+        return $email;
     }
 
     /**

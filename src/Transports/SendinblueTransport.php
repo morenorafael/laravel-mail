@@ -55,11 +55,8 @@ class SendinblueTransport extends Transport
     }
 
     /**
-     * Get the HTTP payload for sending the SendGrid message.
-     *
-     * @param  \Swift_Mime_SimpleMessage $message
-     * @param  array $to
-     * @return array
+     * @param Swift_Mime_SimpleMessage $message
+     * @param array $to
      */
     protected function setPayload(Swift_Mime_SimpleMessage $message, array $to)
     {
