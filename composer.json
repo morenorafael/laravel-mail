@@ -1,6 +1,6 @@
 {
     "name": "morenorafael/laravel-mail",
-    "description": "asd",
+    "description": "Este paquete extiende el funcionamiento del servicio Mail de Laravel",
     "license": "MIT",
     "authors": [
         {
